@@ -2,10 +2,12 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build/examples)
 
 message(STATUS "HERE, COROSCH_3RD_PARTY_DIR = ${COROSCH_3RD_PARTY_DIR}")
 
-add_executable(linear_chain_tf ${COROSCH_EXAMPLE_DIR}/linear_chain_tf.cu)
+add_executable(lc_tf ${COROSCH_EXAMPLE_DIR}/lc_tf.cu)
+add_executable(lc_central_queue ${COROSCH_EXAMPLE_DIR}/lc_central_queue.cu)
 
 list(APPEND COROSCH_EXAMPLES
-  linear_chain_tf
+  lc_tf
+  lc_central_queue
 )
 
 foreach(example IN LISTS COROSCH_EXAMPLES) 

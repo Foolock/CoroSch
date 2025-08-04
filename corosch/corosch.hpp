@@ -8,7 +8,6 @@
 #include <unordered_map>
 #include <chrono>
 #include <coroutine>
-#include "taskflow/taskflow.hpp"
 #include "coro_scheduler.hpp"
 
 namespace cs {
@@ -26,15 +25,15 @@ public:
 
   Node(const std::string& name=""): _name(name) {}
 
+  inline void set_done() { _done_coro = true; }
+
 private:
 
   std::string _name;
   std::list<Edge*> _fanouts;
   std::list<Edge*> _fanins;
 
-  tf::Task _task_tf; // taskflow task
-  cs::Task* _task_coro; // coroutine task
-
+  bool _done_coro = false;
 };
 
 class Edge {
