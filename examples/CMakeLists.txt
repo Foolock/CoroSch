@@ -1,5 +1,7 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build/examples)
 
+message(STATUS "HERE, COROSCH_3RD_PARTY_DIR = ${COROSCH_3RD_PARTY_DIR}")
+
 add_executable(linear_chain_tf ${COROSCH_EXAMPLE_DIR}/linear_chain_tf.cu)
 
 list(APPEND COROSCH_EXAMPLES
