@@ -40,6 +40,10 @@ struct Task {
     return this;
   }
 
+  inline bool is_done() {
+    return get_handle().promise().done;
+  }
+
   void precede(Task* next) {
     successors.push_back(next);
     next->dependency_count.fetch_add(1, std::memory_order_relaxed);

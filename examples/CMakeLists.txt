@@ -9,10 +9,18 @@ set_target_properties(kernels PROPERTIES CUDA_ARCHITECTURES 86)
 
 add_executable(lc_tf ${COROSCH_EXAMPLE_DIR}/lc_tf.cpp)
 add_executable(lc_central_queue ${COROSCH_EXAMPLE_DIR}/lc_central_queue.cpp)
+add_executable(lc_central_priority_queue ${COROSCH_EXAMPLE_DIR}/lc_central_priority_queue.cpp)
+add_executable(fd_tf ${COROSCH_EXAMPLE_DIR}/fd_tf.cpp)
+add_executable(fd_central_queue ${COROSCH_EXAMPLE_DIR}/fd_central_queue.cpp)
+add_executable(fd_central_priority_queue ${COROSCH_EXAMPLE_DIR}/fd_central_priority_queue.cpp)
 
 list(APPEND COROSCH_EXAMPLES
   lc_tf
   lc_central_queue
+  lc_central_priority_queue
+  fd_tf
+  fd_central_queue
+  fd_central_priority_queue
 )
 
 foreach(example IN LISTS COROSCH_EXAMPLES) 

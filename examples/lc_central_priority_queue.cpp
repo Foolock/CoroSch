@@ -1,7 +1,7 @@
 #include "coro_scheduler.hpp"
 #include "kernels.cuh"
 
-cs::Task gpu_mm_cpu_reduce_coro(cs::SchedulerCentralQueue& sch, const int num_itr, const int length) {
+cs::Task gpu_mm_cpu_reduce_coro(cs::SchedulerCentralPriorityQueue& sch, const int num_itr, const int length) {
   size_t size = length * length * sizeof(float);
 
   std::vector<float> A(length * length, 1.0f);
@@ -68,7 +68,7 @@ int main(int argc, char *argv[]) {
   std::cout << "--------------------\n";
   std::cout << "num_itr = " << num_itr << ", length = " << length << ", num_nodes = " << num_nodes << ", num_threads = " << num_threads << "\n";
 
-  cs::SchedulerCentralQueue coro_scheduler(num_threads);
+  cs::SchedulerCentralPriorityQueue coro_scheduler(num_threads);
 
   std::vector<cs::Task*> tasks(num_nodes);
 
@@ -102,7 +102,6 @@ int main(int argc, char *argv[]) {
 
   return 0;
 }
-
 
 
 

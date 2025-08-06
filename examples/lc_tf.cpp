@@ -86,7 +86,21 @@ int main(int argc, char *argv[]) {
     tasks[i].precede(tasks[i + 1]);
   }
 
+  auto start = std::chrono::steady_clock::now();
   executor.run(taskflow).wait();
+  auto end = std::chrono::steady_clock::now();
+  size_t taskflow_runtime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+  // check result
+  for (auto d : done) {
+    if (!d) {
+      std::cerr << "❌ calculation is wrong!\n";
+      std::exit(EXIT_FAILURE);
+    }
+  }
+
+  std::cout << "✅ all calculations correct\n";
+  std::cout << "taskflow runtime = " << taskflow_runtime << "ms\n\n";
 
   return 0;
 }

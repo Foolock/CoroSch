@@ -1,7 +1,7 @@
-#include "coro_scheduler.hpp"
+#include "taskflow/taskflow.hpp"
 #include "kernels.cuh"
 
-cs::Task gpu_mm_cpu_reduce_coro(cs::SchedulerCentralQueue& sch, const int num_itr, const int length) {
+bool gpu_mm_cpu_reduce(const int num_itr, const int length) {
   size_t size = length * length * sizeof(float);
 
   std::vector<float> A(length * length, 1.0f);
@@ -29,11 +29,10 @@ cs::Task gpu_mm_cpu_reduce_coro(cs::SchedulerCentralQueue& sch, const int num_it
                          d_C,
                          length, num_itr, stream);
 
-    // Async wait
-    while (cudaStreamQuery(stream) != cudaSuccess) {
-      co_await sch.suspend();
-    }
+    // cudaStreamSync;
+    cudaStreamSynchronize(stream);
 
+    // Reduction on CPU
     float partial_sum = std::accumulate(C.begin(), C.end(), 0.0f);
     cpu_sum += partial_sum;
   }
@@ -43,14 +42,15 @@ cs::Task gpu_mm_cpu_reduce_coro(cs::SchedulerCentralQueue& sch, const int num_it
   cudaFree(d_C);
   cudaStreamDestroy(stream);
 
+  // Validation
   float expected_total = static_cast<float>(num_itr * length * length * length);
   if (std::abs(cpu_sum - expected_total) > 1e-3f) {
     std::cerr << "❌ Reduction result mismatch: expected " << expected_total
               << ", got " << cpu_sum << "\n";
-    co_return false;
+    return false;
   }
 
-  co_return true;
+  return true;
 }
 
 int main(int argc, char *argv[]) {
@@ -68,41 +68,37 @@ int main(int argc, char *argv[]) {
   std::cout << "--------------------\n";
   std::cout << "num_itr = " << num_itr << ", length = " << length << ", num_nodes = " << num_nodes << ", num_threads = " << num_threads << "\n";
 
-  cs::SchedulerCentralQueue coro_scheduler(num_threads);
+  tf::Taskflow taskflow;
+  tf::Executor executor(num_threads);
 
-  std::vector<cs::Task*> tasks(num_nodes);
+  std::vector<tf::Task> tasks; 
+  std::vector<bool> done(num_nodes);
 
   // emplace tasks
   for(int i = 0; i < num_nodes; i++) {
-    tasks[i] = coro_scheduler.emplace(
-      gpu_mm_cpu_reduce_coro(coro_scheduler, num_itr, length).get_handle()
-    );
-  }
-
-  // build dependencies
-  for(int i = 0; i < num_nodes - 1; i++) {
-    tasks[i]->precede(tasks[i + 1]);
+    tasks.emplace_back(taskflow.emplace([&done, i, num_itr, length]() {
+      done[i] = gpu_mm_cpu_reduce(num_itr, length); 
+    }));
   }
 
   auto start = std::chrono::steady_clock::now();
-  coro_scheduler.schedule();
-  coro_scheduler.wait();
+  executor.run(taskflow).wait();
   auto end = std::chrono::steady_clock::now();
-  size_t coro_runtime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+  size_t taskflow_runtime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-  for(auto& task : tasks) {
-    if (!task->is_done()) {
+  // check result
+  for (auto d : done) {
+    if (!d) {
       std::cerr << "❌ calculation is wrong!\n";
       std::exit(EXIT_FAILURE);
     }
   }
 
   std::cout << "✅ all calculations correct\n";
-  std::cout << "coro runtime = " << coro_runtime << "ms\n\n";
+  std::cout << "taskflow runtime = " << taskflow_runtime << "ms\n\n";
 
   return 0;
 }
-
 
 
 
