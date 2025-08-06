@@ -1,6 +1,40 @@
 #include "taskflow/taskflow.hpp"
 #include "kernels.cuh"
 
+bool cpu_mm_reduce(const int num_itr, const int length) {
+  std::vector<float> A(length * length, 1.0f);
+  std::vector<float> B(length * length, 1.0f);
+  std::vector<float> C(length * length, 0.0f);
+
+  float cpu_sum = 0.0f;
+
+  for (int itr = 0; itr < num_itr; ++itr) {
+    // Matrix multiplication: C = A * B
+    for (int i = 0; i < length; ++i) {
+      for (int j = 0; j < length; ++j) {
+        float sum = 0.0f;
+        for (int k = 0; k < length; ++k) {
+          sum += A[i * length + k] * B[k * length + j];
+        }
+        C[i * length + j] = sum;
+      }
+    }
+
+    // CPU reduction
+    float partial_sum = std::accumulate(C.begin(), C.end(), 0.0f);
+    cpu_sum += partial_sum;
+  }
+
+  float expected_total = static_cast<float>(num_itr * length * length * length);
+  if (std::abs(cpu_sum - expected_total) > 1e-3f) {
+    std::cerr << "❌ Reduction result mismatch: expected " << expected_total
+              << ", got " << cpu_sum << "\n";
+    return false;
+  }
+
+  return true;
+}
+
 bool gpu_mm_cpu_reduce(const int num_itr, const int length) {
   size_t size = length * length * sizeof(float);
 
@@ -78,6 +112,7 @@ int main(int argc, char *argv[]) {
   for(int i = 0; i < num_nodes; i++) {
     tasks.emplace_back(taskflow.emplace([&done, i, num_itr, length]() {
       done[i] = gpu_mm_cpu_reduce(num_itr, length); 
+      // done[i] = cpu_mm_reduce(num_itr, length); 
     }));
   }
 
