@@ -1,5 +1,6 @@
 #pragma once
 
+#include <numeric>
 #include "coro_scheduler_base.hpp"
 #include "central_queue.hpp"
 #include "central_priority_queue.hpp"

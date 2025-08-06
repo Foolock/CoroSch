@@ -1,7 +1,7 @@
-#include "corosch.hpp"
+#include "coro_scheduler.hpp"
 #include "kernels.cuh"
 
-cs::Task gpu_mm_cpu_reduce_coro(cs::SchedulerCentralQueue& sch, const int num_itr, const int length, cs::Node* node) {
+cs::Task gpu_mm_cpu_reduce_coro(cs::SchedulerCentralQueue& sch, const int num_itr, const int length) {
   size_t size = length * length * sizeof(float);
 
   std::vector<float> A(length * length, 1.0f);
@@ -47,10 +47,10 @@ cs::Task gpu_mm_cpu_reduce_coro(cs::SchedulerCentralQueue& sch, const int num_it
   if (std::abs(cpu_sum - expected_total) > 1e-3f) {
     std::cerr << "❌ Reduction result mismatch: expected " << expected_total
               << ", got " << cpu_sum << "\n";
-    co_return;
+    co_return false;
   }
 
-  node->set_done();
+  co_return true;
 }
 
 int main(int argc, char *argv[]) {
@@ -68,5 +68,20 @@ int main(int argc, char *argv[]) {
   std::cout << "--------------------\n";
   std::cout << "num_itr = " << num_itr << ", length = " << length << ", num_nodes = " << num_nodes << ", num_threads = " << num_threads << "\n";
 
+  cs::SchedulerCentralQueue coro_scheduler(num_threads);
+
   return 0;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+

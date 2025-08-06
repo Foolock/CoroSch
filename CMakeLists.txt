@@ -40,6 +40,7 @@ set(COROSCH_EXAMPLE_DIR ${PROJECT_SOURCE_DIR}/examples)
 # must-have package include
 # -----------------------------------------------------------------------------
 include(CheckLanguage)
+include_directories(/usr/local/cuda/include)
 
 # Enable test
 include(CTest)

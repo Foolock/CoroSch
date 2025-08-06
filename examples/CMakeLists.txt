@@ -2,8 +2,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/build/examples)
 
 message(STATUS "HERE, COROSCH_3RD_PARTY_DIR = ${COROSCH_3RD_PARTY_DIR}")
 
-add_executable(lc_tf ${COROSCH_EXAMPLE_DIR}/lc_tf.cu)
-add_executable(lc_central_queue ${COROSCH_EXAMPLE_DIR}/lc_central_queue.cu)
+# CUDA kernels
+add_library(kernels STATIC kernels.cu)
+set_target_properties(kernels PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+set_target_properties(kernels PROPERTIES CUDA_ARCHITECTURES 86)
+
+add_executable(lc_tf ${COROSCH_EXAMPLE_DIR}/lc_tf.cpp)
+add_executable(lc_central_queue ${COROSCH_EXAMPLE_DIR}/lc_central_queue.cpp)
 
 list(APPEND COROSCH_EXAMPLES
   lc_tf
@@ -16,6 +21,10 @@ foreach(example IN LISTS COROSCH_EXAMPLES)
     PUBLIC 
     ${COROSCH_3RD_PARTY_DIR}/taskflow
     ${PROJECT_SOURCE_DIR}/corosch)
+
+  target_link_libraries(${example} PRIVATE kernels)
+
+  target_compile_options(${example} PRIVATE -fcoroutines)
 
 endforeach()
 

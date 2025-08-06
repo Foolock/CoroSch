@@ -8,24 +8,21 @@
 #include <unordered_map>
 #include <chrono>
 #include <coroutine>
-#include "coro_scheduler.hpp"
 
 namespace cs {
 
 // graph structure
 class Node;
 class Edge;
-class CoroSch;
+class Graph;
 
 class Node {
 
-friend class CoroSch;
+friend class Graph;
 
 public:
 
   Node(const std::string& name=""): _name(name) {}
-
-  inline void set_done() { _done_coro = true; }
 
 private:
 
@@ -33,12 +30,11 @@ private:
   std::list<Edge*> _fanouts;
   std::list<Edge*> _fanins;
 
-  bool _done_coro = false;
 };
 
 class Edge {
 
-friend class CoroSch;
+friend class Graph;
 
 private:
 
@@ -47,12 +43,12 @@ private:
 
 };
 
-class CoroSch {
+class Graph {
 
 public:
 
   // constructor
-  CoroSch() {} // default
+  Graph() {} // default
 
   // operation
   Node* insert_node(const std::string& name = "");
@@ -65,6 +61,32 @@ private:
   std::list<Edge> _edges;
 
 };
+
+inline
+Node* Graph::insert_node(const std::string& name) {
+
+  // emplace new node to _nodes
+  Node* node_ptr = &(_nodes.emplace_back(name));
+
+  return node_ptr;
+}
+
+inline
+Edge* Graph::insert_edge(Node* from, Node* to) {
+
+  // emplace new edge to _edges
+  Edge* edge_ptr = &(_edges.emplace_back());
+
+  // add edge attributes
+  edge_ptr->_from = from;
+  edge_ptr->_to = to;
+
+  // add node fanin/fanout
+  from->_fanouts.push_back(edge_ptr);
+  to->_fanins.push_back(edge_ptr);
+
+  return edge_ptr;
+}
 
 } // end of namespace cs 
 

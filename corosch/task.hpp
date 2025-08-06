@@ -18,6 +18,7 @@ struct Task {
   std::atomic<size_t> pop_count{0};
 
   struct promise_type {
+    bool done = false;
     std::string name;
 
     std::suspend_always initial_suspend() noexcept { return {}; }
@@ -26,7 +27,8 @@ struct Task {
     Task get_return_object() {
       return Task{std::coroutine_handle<promise_type>::from_promise(*this)};
     }
-    void return_void() {}
+    // void return_void() {}
+    void return_value(bool d) { done = d; }
     void unhandled_exception() {}
   };
 
