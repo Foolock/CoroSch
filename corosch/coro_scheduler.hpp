@@ -4,6 +4,7 @@
 #include "coro_scheduler_base.hpp"
 #include "central_queue.hpp"
 #include "central_priority_queue.hpp"
+#include "work_stealing.hpp"
 
 namespace cs {
 

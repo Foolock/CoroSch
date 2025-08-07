@@ -17,11 +17,9 @@ for tc in ${thread_count[@]}
 do
   cd ../build
 
-  # for matrix_size in 50 100 150 
-  for matrix_size in 10 20 
+  for matrix_size in 50 100 150 
   do
-    # for num_nodes in 1000 2000 3000 4000 5000 
-    for num_nodes in 100 200 
+    for num_nodes in 1000 2000 3000 4000 5000 
     do
       echo "writing results for fully disconnected, thread count = ${tc}, matrix_size = ${matrix_size}, num_nodes = ${num_nodes}"
       for i in 1 2 3 
@@ -50,11 +48,9 @@ for tc in ${thread_count[@]}
 do
   cd ../build
 
-  # for matrix_size in 50 100 150 
-  for matrix_size in 10 20 
+  for matrix_size in 50 100 150 
   do
-    # for num_nodes in 1000 2000 3000 4000 5000 
-    for num_nodes in 100 200 
+    for num_nodes in 1000 2000 3000 4000 5000 
     do
       echo "writing results for linear chain, thread count = ${tc}, matrix_size = ${matrix_size}, num_nodes = ${num_nodes}"
       for i in 1 2 3 
