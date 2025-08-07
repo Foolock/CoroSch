@@ -18,22 +18,22 @@ __global__ void matmul(const float* A, const float* B, float* C, int length, int
   }
 }
 
-void launch_matmul_update(const std::vector<float>& A,
-                          const std::vector<float>& B,
-                          std::vector<float>& C,
+void launch_matmul_update(const float* A,
+                          const float* B,
+                          float* C,
                           const float* d_A,
                           const float* d_B,
                           float* d_C,
+                          int block_size,
+                          int grid_size,
+                          int size,
                           int length, int num_itr, cudaStream_t stream) {
 
-  size_t size = length * length * sizeof(float);
+  cudaMemcpyAsync((void*)d_A, A, size, cudaMemcpyHostToDevice, stream);
+  cudaMemcpyAsync((void*)d_B, B, size, cudaMemcpyHostToDevice, stream);
 
-  cudaMemcpyAsync((void*)d_A, A.data(), size, cudaMemcpyHostToDevice, stream);
-  cudaMemcpyAsync((void*)d_B, B.data(), size, cudaMemcpyHostToDevice, stream);
-
-  int block_size = 512;
-  int grid_size = (length * length + block_size - 1) / block_size;
   matmul<<<grid_size, block_size, 0, stream>>>(d_A, d_B, d_C, length, num_itr);
 
-  cudaMemcpyAsync(C.data(), d_C, size, cudaMemcpyDeviceToHost, stream);
+  cudaMemcpyAsync(C, d_C, size, cudaMemcpyDeviceToHost, stream);
 }
+

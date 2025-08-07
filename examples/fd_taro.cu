@@ -90,11 +90,6 @@ int main(int argc, char *argv[]) {
     }));
   }
 
-  // build dependencies
-  for(int i = 0; i < num_nodes - 1; i++) {
-    tasks[i].precede(tasks[i + 1]);
-  }
-
   auto start = std::chrono::steady_clock::now();
   taro.schedule();
   taro.wait();

@@ -3,10 +3,16 @@
 
 bool gpu_mm_cpu_reduce(const int num_itr, const int length) {
   size_t size = length * length * sizeof(float);
+  int block_size = 512;
+  int grid_size = (length * length + block_size - 1) / block_size;
 
-  std::vector<float> A(length * length, 1.0f);
-  std::vector<float> B(length * length, 1.0f);
-  std::vector<float> C(length * length, 0.0f);
+  float* A = new float[size];
+  float* B = new float[size];
+  float* C = new float[size];
+
+  std::fill(A, A + size, 1.0f);
+  std::fill(B, B + size, 1.0f);
+  std::fill(C, C + size, 0.0f);
 
   float *d_A, *d_B, *d_C;
 
@@ -27,13 +33,16 @@ bool gpu_mm_cpu_reduce(const int num_itr, const int length) {
                          d_A,
                          d_B,
                          d_C,
+                         block_size,
+                         grid_size,
+                         size,
                          length, num_itr, stream);
 
     // cudaStreamSync;
     cudaStreamSynchronize(stream);
 
     // Reduction on CPU
-    float partial_sum = std::accumulate(C.begin(), C.end(), 0.0f);
+    float partial_sum = std::accumulate(C, C + size, 0.0f);
     cpu_sum += partial_sum;
   }
 
@@ -41,6 +50,10 @@ bool gpu_mm_cpu_reduce(const int num_itr, const int length) {
   cudaFree(d_B);
   cudaFree(d_C);
   cudaStreamDestroy(stream);
+
+  delete[] A;
+  delete[] B;
+  delete[] C;
 
   // Validation
   float expected_total = static_cast<float>(num_itr * length * length * length);
