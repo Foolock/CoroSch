@@ -13,6 +13,7 @@ add_executable(lc_central_priority_queue ${COROSCH_EXAMPLE_DIR}/lc_central_prior
 add_executable(fd_tf ${COROSCH_EXAMPLE_DIR}/fd_tf.cpp)
 add_executable(fd_central_queue ${COROSCH_EXAMPLE_DIR}/fd_central_queue.cpp)
 add_executable(fd_central_priority_queue ${COROSCH_EXAMPLE_DIR}/fd_central_priority_queue.cpp)
+add_executable(lc_taro ${COROSCH_EXAMPLE_DIR}/lc_taro.cu)
 
 list(APPEND COROSCH_EXAMPLES
   lc_tf
@@ -21,6 +22,7 @@ list(APPEND COROSCH_EXAMPLES
   fd_tf
   fd_central_queue
   fd_central_priority_queue
+  lc_taro
 )
 
 foreach(example IN LISTS COROSCH_EXAMPLES) 
@@ -28,6 +30,7 @@ foreach(example IN LISTS COROSCH_EXAMPLES)
   target_include_directories(${example}
     PUBLIC 
     ${COROSCH_3RD_PARTY_DIR}/taskflow
+    ${COROSCH_3RD_PARTY_DIR}/taro
     ${PROJECT_SOURCE_DIR}/corosch)
 
   target_link_libraries(${example} PRIVATE kernels)
