@@ -62,24 +62,25 @@ SchedulerWorkStealing::SchedulerWorkStealing(size_t num_threads) {
         }
 
         // then steal from others' queues
-        size_t to_steal = 0;
-        for(size_t j=0; j<num_threads; j++) { // j = steal_from(last_steal) 
-          if(j == i) {
-            continue; 
-          }
-          opt = _queues[j]->steal();
-          if(opt.has_value()) {
-            to_steal = j;
-            break;
-          }
-        }
-        if(!opt.has_value()) {
-          continue;
-        }
-        task = opt.value(); 
-        if(task) {
-          _process(task, to_steal);
-        }
+        // size_t to_steal = 0;
+        // for(size_t j=0; j<num_threads; j++) { // j = steal_from(last_steal) 
+        //   if(j == i) {
+        //     continue; 
+        //   }
+        //   fprintf(stderr, "j = %ld\n", j);
+        //   opt = _queues[j]->steal();
+        //   if(opt.has_value()) {
+        //     to_steal = j;
+        //     break;
+        //   }
+        // }
+        // if(!opt.has_value()) {
+        //   continue;
+        // }
+        // task = opt.value(); 
+        // if(task) {
+        //   _process(task, to_steal);
+        // }
       }
     });
   }

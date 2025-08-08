@@ -239,4 +239,3 @@ template <typename T>
 int64_t WorkStealingQueue<T>::capacity() const noexcept {
   return _array.load(std::memory_order_relaxed)->capacity();
 }
-

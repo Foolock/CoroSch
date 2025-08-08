@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <chrono>
 #include <coroutine>
+#include "coro_scheduler.hpp"
 
 namespace cs {
 
@@ -24,12 +25,16 @@ public:
 
   Node(const std::string& name=""): _name(name) {}
 
+  inline
+  cs::Task* get_task_coro() { return _task_coro; }
+
 private:
 
   std::string _name;
   std::list<Edge*> _fanouts;
   std::list<Edge*> _fanins;
 
+  cs::Task* _task_coro;
 };
 
 class Edge {
@@ -49,6 +54,7 @@ public:
 
   // constructor
   Graph() {} // default
+  Graph(const std::string& filename);
 
   // operation
   Node* insert_node(const std::string& name = "");
@@ -61,6 +67,38 @@ private:
   std::list<Edge> _edges;
 
 };
+
+inline
+Graph::Graph(const std::string& filename) { // construct by circuit file
+
+  std::ifstream infile(filename);
+  if (!infile) {
+    std::cerr << "Error opening file." << std::endl;
+    std::exit(1);
+  } 
+
+  int num_nodes;
+  infile >> num_nodes; // Read the number of nodes
+
+  std::unordered_map<std::string, Node*> nodes;
+
+  // Read node names and add them to the graph
+  std::string node_name;
+  for (int i = 0; i < num_nodes; ++i) {
+    infile >> node_name;
+    // Remove quotes from node name
+    node_name = node_name.substr(1, node_name.size() - 3);
+    nodes[node_name] = insert_node(node_name);
+  }
+
+  // Read edges and add them to the graph
+  std::string from, to, arrow;
+  while (infile >> from >> arrow >> to) {
+    from = from.substr(1, from.size() - 2);
+    to = to.substr(1, to.size() - 3);
+    insert_edge(nodes[from], nodes[to]);
+  }
+}
 
 inline
 Node* Graph::insert_node(const std::string& name) {

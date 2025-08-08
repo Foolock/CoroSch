@@ -16,6 +16,7 @@ add_executable(fd_central_priority_queue ${COROSCH_EXAMPLE_DIR}/fd_central_prior
 add_executable(lc_taro ${COROSCH_EXAMPLE_DIR}/lc_taro.cu)
 add_executable(fd_taro ${COROSCH_EXAMPLE_DIR}/fd_taro.cu)
 add_executable(fd_work_stealing ${COROSCH_EXAMPLE_DIR}/fd_work_stealing.cpp)
+add_executable(run_circuit_coro ${COROSCH_EXAMPLE_DIR}/run_circuit_coro.cpp)
 
 list(APPEND COROSCH_EXAMPLES
   lc_tf
@@ -27,6 +28,7 @@ list(APPEND COROSCH_EXAMPLES
   lc_taro
   fd_taro
   fd_work_stealing
+  run_circuit_coro
 )
 
 foreach(example IN LISTS COROSCH_EXAMPLES) 
