@@ -1,56 +1,38 @@
 #include "graph.hpp"
 #include "kernels.cuh"
 
-cs::Task gpu_mm_cpu_reduce_coro(cs::SchedulerWorkStealing& sch, const int num_itr, const int length) {
-  size_t size = length * length * sizeof(float);
-  int block_size = 512;
-  int grid_size = (length * length + block_size - 1) / block_size;
+cs::Task cpu_mm_reduce_coro(cs::SchedulerWorkStealing& sch, const int num_itr, const int length, cs::Node* node, int& finished) {
 
-  float* A = new float[size];
-  float* B = new float[size];
-  float* C = new float[size];
+  finished++;
 
-  std::fill(A, A + size, 1.0f);
-  std::fill(B, B + size, 1.0f);
-  std::fill(C, C + size, 0.0f);
+  fprintf(stderr, "begin CPU task %s, finished = %d\n", node->name().c_str(), finished);
+  // std::cerr << "begin CPU task: " << node->_name << "\n";
 
-  float *d_A, *d_B, *d_C;
-
-  cudaStream_t stream;
-  cudaStreamCreate(&stream);
-
-  cudaMalloc(&d_A, size);
-  cudaMalloc(&d_B, size);
-  cudaMalloc(&d_C, size);
+  std::vector<float> A(length * length, 1.0f);
+  std::vector<float> B(length * length, 1.0f);
+  std::vector<float> C(length * length, 0.0f);
 
   float cpu_sum = 0.0f;
 
   for (int itr = 0; itr < num_itr; ++itr) {
-
-    launch_matmul_update(A,
-                         B,
-                         C,
-                         d_A,
-                         d_B,
-                         d_C,
-                         block_size,
-                         grid_size,
-                         size,
-                         length, num_itr, stream);
-
-    // Async wait
-    while (cudaStreamQuery(stream) != cudaSuccess) {
-      co_await sch.suspend();
+    // Matrix multiplication: C = A * B
+    for (int i = 0; i < length; ++i) {
+      for (int j = 0; j < length; ++j) {
+        float sum = 0.0f;
+        for (int k = 0; k < length; ++k) {
+          sum += A[i * length + k] * B[k * length + j];
+        }
+        C[i * length + j] = sum;
+      }
     }
 
-    float partial_sum = std::accumulate(C, C + size, 0.0f);
+    // Optional: allow coroutine scheduler to interleave (not strictly needed unless yielding is desired)
+    // co_await sch.suspend();
+
+    // CPU reduction
+    float partial_sum = std::accumulate(C.begin(), C.end(), 0.0f);
     cpu_sum += partial_sum;
   }
-
-  cudaFree(d_A);
-  cudaFree(d_B);
-  cudaFree(d_C);
-  cudaStreamDestroy(stream);
 
   float expected_total = static_cast<float>(num_itr * length * length * length);
   if (std::abs(cpu_sum - expected_total) > 1e-3f) {
@@ -79,7 +61,36 @@ int main(int argc, char *argv[]) {
 
   cs::Graph graph(circuit_file);
 
-  cs::SchedulerWorkStealing scheduler(num_threads);
+  cs::SchedulerWorkStealing coro_scheduler(num_threads);
+
+  int finished = 0;
+
+  // emplace tasks
+  for(auto& node : graph.nodes()) {
+    node.set_task_coro(coro_scheduler.emplace(
+      cpu_mm_reduce_coro(coro_scheduler, num_itr, length, &node, finished).get_handle()
+    )->set_name(node.name())); 
+  }
+
+  // build dependencies
+  for(auto& node : graph.nodes()) {
+    for(auto fanout : node.fanouts()) {
+      node.get_task_coro()->precede(fanout->to()->get_task_coro());
+    }
+  }
+
+  coro_scheduler.schedule();
+  coro_scheduler.wait();
+
+  for(auto& node : graph.nodes()) {
+    if (!node.get_task_coro()->is_done()) {
+      std::cerr << "❌ calculation is wrong!\n";
+      std::exit(EXIT_FAILURE);
+    }
+  }
+
+  std::cout << "✅ all calculations correct\n";
+
 
   return 0;
 }

@@ -9,6 +9,7 @@
 #include <chrono>
 #include <coroutine>
 #include "coro_scheduler.hpp"
+#include "taskflow/taskflow.hpp"
 
 namespace cs {
 
@@ -25,8 +26,24 @@ public:
 
   Node(const std::string& name=""): _name(name) {}
 
+  // Accessors
+  const std::string& name() const { return _name; }
+  const std::list<Edge*>& fanouts() const { return _fanouts; }
+  const std::list<Edge*>& fanins() const { return _fanins; }
+
+  // task setter and getter
+  inline
+  void set_task_coro( cs::Task* t ) { _task_coro = t; }
   inline
   cs::Task* get_task_coro() { return _task_coro; }
+  inline
+  void set_task_tf(tf::Task t) { _task_tf = std::move(t); }
+  inline
+  tf::Task& get_task_tf() { return _task_tf; }   
+
+  inline
+  void set_task_tf_status( bool done ) { _task_tf_done = done; }
+  bool get_task_tf_status() { return _task_tf_done; }
 
 private:
 
@@ -35,11 +52,17 @@ private:
   std::list<Edge*> _fanins;
 
   cs::Task* _task_coro;
+  tf::Task _task_tf;
+  bool _task_tf_done = false;
 };
 
 class Edge {
 
 friend class Graph;
+
+public:
+  Node* from() const { return _from; }
+  Node* to() const { return _to; }
 
 private:
 
@@ -59,6 +82,13 @@ public:
   // operation
   Node* insert_node(const std::string& name = "");
   Edge* insert_edge(Node* from, Node* to);
+
+  // read-only access
+  inline
+  const std::list<Node>& nodes() const { return _nodes; }
+  // read/write access
+  inline
+  std::list<Node>& nodes() { return _nodes; }
 
 private:
 

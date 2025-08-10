@@ -56,6 +56,7 @@ SchedulerWorkStealing::SchedulerWorkStealing(size_t num_threads) {
           if(opt.has_value()) {
             task = opt.value();
             if(task) {
+              task->pop_count.fetch_add(1);
               _process(task, i);
             }
           }
@@ -67,7 +68,6 @@ SchedulerWorkStealing::SchedulerWorkStealing(size_t num_threads) {
         //   if(j == i) {
         //     continue; 
         //   }
-        //   fprintf(stderr, "j = %ld\n", j);
         //   opt = _queues[j]->steal();
         //   if(opt.has_value()) {
         //     to_steal = j;
@@ -106,6 +106,10 @@ void SchedulerWorkStealing::schedule() {
 
   // put all source tasks in the first wsq
   for(auto& task : srcs) {
+    // fprintf(stderr, "enqueue source task %s\n", task->name.c_str());
+    if(task->finished.load()) {
+      fprintf(stderr, "enqueue destroy source %s\n", task->name.c_str());
+    }
     _enqueue(task, 0);
   }
 }
@@ -125,11 +129,19 @@ void SchedulerWorkStealing::wait() {
 inline
 void SchedulerWorkStealing::_enqueue(Task* task, size_t tid) {
   _queues[tid]->push(task);
+  task->push_count.fetch_add(1);
 }
 
 inline
 void SchedulerWorkStealing::_process(Task* node, size_t tid) {
 
+  fprintf(stderr, "resume CPU task %s, push = %ld, pop = %ld\n", node->name.c_str(), node->push_count.load(), node->pop_count.load());
+
+  // if(node->finished.load()) {
+  //   fprintf(stderr, "resume destroy task %s\n", node->name.c_str());
+  //   std::exit(EXIT_FAILURE);
+  // }
+  
   node->handle.resume();
 
   if (!node->handle.done()) {
@@ -143,6 +155,9 @@ void SchedulerWorkStealing::_process(Task* node, size_t tid) {
     // put successors into my own queue and let others steal them 
     for (auto& succ : node->successors) {
       if (succ->dependency_count.fetch_sub(1) == 1) {
+        if(succ->finished.load()) {
+          fprintf(stderr, "enqueue destroy succ %s\n", succ->name.c_str());
+        }
         _enqueue(succ, tid);
       }
     }
@@ -150,6 +165,8 @@ void SchedulerWorkStealing::_process(Task* node, size_t tid) {
     if (_finished.fetch_add(1) + 1 == _tasks.size()) {
       _stop = true;
     }
+
+    fprintf(stderr, "finish coroutine handle %s, _finished = %ld\n", node->name.c_str(), _finished.load());
   }
 }
 
