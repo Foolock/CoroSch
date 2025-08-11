@@ -18,6 +18,7 @@ add_executable(fd_taro ${COROSCH_EXAMPLE_DIR}/fd_taro.cu)
 add_executable(fd_work_stealing ${COROSCH_EXAMPLE_DIR}/fd_work_stealing.cpp)
 add_executable(run_circuit_coro ${COROSCH_EXAMPLE_DIR}/run_circuit_coro.cpp)
 add_executable(run_circuit_tf ${COROSCH_EXAMPLE_DIR}/run_circuit_tf.cpp)
+add_executable(run_circuit_non_coro ${COROSCH_EXAMPLE_DIR}/run_circuit_non_coro.cpp)
 
 list(APPEND COROSCH_EXAMPLES
   lc_tf
@@ -31,6 +32,7 @@ list(APPEND COROSCH_EXAMPLES
   fd_work_stealing
   run_circuit_coro
   run_circuit_tf
+  run_circuit_non_coro
 )
 
 foreach(example IN LISTS COROSCH_EXAMPLES) 

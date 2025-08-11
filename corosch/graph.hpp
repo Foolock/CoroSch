@@ -10,6 +10,7 @@
 #include <coroutine>
 #include "coro_scheduler.hpp"
 #include "taskflow/taskflow.hpp"
+#include "work_stealingN.hpp"  // non-coroutine version
 
 namespace cs {
 
@@ -37,6 +38,10 @@ public:
   inline
   cs::Task* get_task_coro() { return _task_coro; }
   inline
+  void set_task_non_coro( cs::NTask* t ) { _task_non_coro = t; }
+  inline
+  cs::NTask* get_task_non_coro() { return _task_non_coro; }
+  inline
   void set_task_tf(tf::Task t) { _task_tf = std::move(t); }
   inline
   tf::Task& get_task_tf() { return _task_tf; }   
@@ -52,6 +57,7 @@ private:
   std::list<Edge*> _fanins;
 
   cs::Task* _task_coro;
+  cs::NTask* _task_non_coro;
   tf::Task _task_tf;
   bool _task_tf_done = false;
 };

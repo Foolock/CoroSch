@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)  # Ensure you have at least CMake 3.8
+cmake_minimum_required(VERSION 3.26)  # Ensure you have at least CMake 3.8
 project(CoroSch VERSION 1.0 LANGUAGES C CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 20)
